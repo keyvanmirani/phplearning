@@ -1,6 +1,6 @@
 <?php
-header("Content-Type: image/jpeg");
 session_start();
+header("Content-Type: image/jpeg");
 function createRandomcode(int $number){
   $character = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   $randomStr = '';
@@ -10,7 +10,9 @@ function createRandomcode(int $number){
   return $randomStr;
 }
 $generated = createRandomcode(5);
-$_SESSION['verification-code'] = $generated;
+$key = $_GET['key'];
+$_SESSION['verification_code'] = $_SESSION['verification_code'] ?? [];
+$_SESSION['verification_code'][$key] = $generated;
 
 $width = 200;
 $height = 100;
@@ -24,5 +26,5 @@ imageline($image,20, 70, 180, 20,$text_color);
 imageline($image,30, 80, 180, 30,$text_color);
 
 imagejpeg($image);
-header('Content-Disposition: attachment; filename="newcaptcha.jpeg"');
+// header('Content-Disposition: attachment; filename="newcaptcha.jpeg"');
 imagedestroy($image);

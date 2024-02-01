@@ -1,35 +1,39 @@
 <?php
 session_start();
 $massage = '';
-$verificationCode = $_SESSION['verification-code'];
-print_r($_SESSION);
-print_r($verificationCode);
+// print_r($_SESSION);
 if (isset($_POST['captcha'])) {
     $captcha = $_POST['captcha'];
+    $captchaKey = $_POST['key'];
+    $verificationCode= $_SESSION['verification_code'][$captchaKey];
     if ($captcha === $verificationCode) {
         $massage = 'it is ok';
         echo '<div>';
         echo $massage;
         echo '</div>';
+        session_destroy();
         exit;
     } else {
         $massage = 'it is not ok';
         echo '<div>';
         echo $massage;
         echo '</div>';
+        session_destroy();
     }
+    
 }
+$key = rand(1,10000);
+
 ?>
 
 <body>
-    <img src="generateCaptcha.php">
+    <h3><?=$key?></h3>
+    <img src="generateCaptcha.php?key=<?=$key?>">
     <form action="" method="post">
+        <input type="hidden" name="key" value="<?=$key?>" />
         Enter captcha <input type="text" name="captcha"><br>
         <input type="submit" name="submitbtn">
     </form>
-    <?php
 
-    session_destroy();
-    ?>
 
 </body>
