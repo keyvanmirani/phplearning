@@ -2,13 +2,17 @@
 
 // image create tools
 $imageInfo = typeAndNamePicker($_GET);
-$fontsize = 40;
+$fontSize = 40;
 $fontName = "font/IntelOneMono-Bold.ttf";
-$colorText = imagecolorallocate($im, 0, 0, 0);
-$imagePath = 'images/' . $imageInfo[2] . '/'. $imageInfo[0];
+$imagePath = 'images/' . $imageInfo[2] . '/' . $imageInfo[0];
+$image = createImage($imagePath, $imageInfo[2]);
+$thumbPercent = 0.5;
 
-// image watermark needed
-$string = "Agha Omid";
+// stamp needed
+$width = 100;
+$height = 70;
+$stampText = "Agha Omid";
+$textColor = imagecolorallocate($image, 255, 255, 255);
 
 //function for split name and type
 function typeAndNamePicker($get_url): array
@@ -19,74 +23,56 @@ function typeAndNamePicker($get_url): array
     return $ImageInfo;
 }
 
-
 // function for creation images by type
-function createImage($imagePath,$ImageType){
-    header('content-type: image/' . $ImageType);
-    switch ($ImageType){
+function createImage($imagePath, $imageType)
+{
+    switch ($imageType) {
         case 'jpg':
         case 'jpeg':
-            $image = imagecreatefromjpeg($imagePath);
-            imagejpeg($image);
+            return imagecreatefromjpeg($imagePath);
             break;
         case 'png':
-            $image = @imagecreatefrompng($imagePath);
-            imagepng($image);
+            return imagecreatefrompng($imagePath);
             break;
         case 'webp':
-            $image = imagecreatefromwebp($imagePath);
-            imagewebp($image);
-            break;
-        default :
-            break;
-            
-        }
-}
-
-// function for watermark creator
-function createWatermark($image, $fontName, $offset_x,$offset_y, $watermarkText, $textColor){
-
-}
-
-createImage($imagePath,$imageInfo[2]);
-exit;
-
-imagestring($im, $fontsize, $px, 9, $string, $orange);
-imagepng($im);
-imagedestroy($im);
-
-function saveThumbnail($saveToDir, $imagePath, $imageName, $max_x, $max_y)
-{
-    preg_match("'^(.*)\.(gif|jpe?g|png)$'i", $imageName, $ext);
-    switch (strtolower($ext[2])) {
-        case 'jpg':
-        case 'jpeg':
-            $im   = imagecreatefromjpeg($imagePath);
-            break;
-        case 'gif':
-            $im   = imagecreatefromgif($imagePath);
-            break;
-        case 'png':
-            $im   = imagecreatefrompng($imagePath);
+            return imagecreatefromwebp($imagePath);
             break;
         default:
-            $stop = true;
-            break;
+            return false;
     }
+}
 
-    if (!isset($stop)) {
-        $x = imagesx($im);
-        $y = imagesy($im);
+// function for create Stamp
+function createStamp($image, $stampText, $textColor, $fontSize, $offset_x, $offset_y)
+{
+    imagestring($image, $fontSize, $offset_x, $offset_y, $stampText, $textColor);
+    return $image;
+}
 
-        if (($max_x / $max_y) < ($x / $y)) {
-            $save = imagecreatetruecolor($x / ($x / $max_x), $y / ($x / $max_x));
-        } else {
-            $save = imagecreatetruecolor($x / ($y / $max_y), $y / ($y / $max_y));
-        }
-        imagecopyresized($save, $im, 0, 0, 0, 0, imagesx($save), imagesy($save), $x, $y);
+// function for create thumbnail
+function createThumbnail($imagePath,$image, $thumbPercent)
+{
+    list($width, $height) = getimagesize($imagePath);
+    $newWidth = $width * $thumbPercent;
+    $newHeight = $height * $thumbPercent;
+    $thumb = imagecreatetruecolor($newWidth, $newHeight);
+    imagecopyresized($thumb, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+    return $thumb;
+}
 
-        imagegif($save, "{$saveToDir}{$ext[1]}.gif");
-        imagedestroy($im);
-        imagedestroy($save);
-    }
+if ($image !== false) {
+    // Add the stamp
+    $imageThumb = createThumbnail($imagePath,$image,$thumbPercent);
+    $imageWithStamp = createStamp($image, $stampText, $textColor, $fontSize, 10, 10);
+
+    // Save or output the modified image
+    header('Content-type: ' . $imageInfo[2]);
+    imagejpeg($imageWithStamp);
+    imagejpeg($imageThumb, 'images/thumbnail/' . $imageInfo[1] . '-thumb.jpg');
+    imagejpeg($imageWithStamp, 'images/stamped/' . $imageInfo[1] . '-stamped.jpg');
+    imagedestroy($image);
+    imagedestroy($imageWithStamp);
+    imagedestroy($imageThumb);
+} else {
+    echo 'Failed to load image.';
 }
